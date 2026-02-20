@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Book Ticket - Bus Booking{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="booking-card">
+        <h2 class="booking-title">
+            <i class="fas fa-ticket-alt"></i> Book Your Ticket
+        </h2>
+        
+        {% if not online %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Offline Booking:</strong> This booking will be saved locally and 
+            synchronized when connection is restored. You'll receive a temporary booking reference.
+        </div>
+        {% endif %}
+        
+        <div class="schedule-summary">
+            <h4>Journey Details</h4>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <label>Route:</label>
+                    <span>{{ schedule.route_name }}</span>
+                </div>
+                <div class="summary-item">
+                    <label>Bus:</label>
+                    <span>{{ schedule.bus_number }}</span>
+                </div>
+                <div class="summary-item">
+                    <label>Date:</label>
+                    <span>{{ schedule.travel_date }}</span>
+                </div>
+                <div class="summary-item">
+                    <label>Departure:</label>
+                    <span>{{ schedule.departure_time }} from {{ schedule.origin_city }}</span>
+                </div>
+                <div class="summary-item">
+                    <label>Arrival:</label>
+                    <span>{{ schedule.arrival_time }} at {{ schedule.destination_city }}</span>
+                </div>
+                <div class="summary-item">
+                    <label>Fare per seat:</label>
+                    <span class="fare">${{ schedule.fare if schedule.fare else '50.00' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <form method="POST" class="booking-form">
+            <h4>Passenger Details</h4>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="passenger_name">
+                        <i class="fas fa-user"></i> Full Name *
+                    </label>
+                    <input type="text" id="passenger_name" name="passenger_name" required 
+                           placeholder="Passenger's full name" class="form-control"
+                           value="{{ session.get('full_name', '') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="passenger_age">
+                        <i class="fas fa-birthday-cake"></i> Age *
+                    </label>
+                    <input type="number" id="passenger_age" name="passenger_age" required 
+                           min="1" max="120" placeholder="Age" class="form-control"
+                           value="25">
+                </div>
+                
+                <div class="form-group">
+                    <label for="passenger_gender">
+                        <i class="fas fa-venus-mars"></i> Gender *
+                    </label>
+                    <select id="passenger_gender" name="passenger_gender" required class="form-control">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="seat_count">
+                    <i class="fas fa-chair"></i> Number of Seats *
+                </label>
+                <div class="seat-selector">
+                    <button type="button" class="seat-btn" onclick="changeSeats(-1)">-</button>
+                    <input type="number" id="seat_count" name="seat_count" 
+                           value="1" min="1" max="10" readonly class="seat-count">
+                    <button type="button" class="seat-btn" onclick="changeSeats(1)">+</button>
+                    <span class="seat-info">Max 10 seats per booking</span>
+                </div>
+            </div>
+            
+            <div class="fare-calculation">
+                <div class="fare-item">
+                    <span>Base Fare (x<span id="displaySeats">1</span>):</span>
+                    <span>$<span id="baseFare">{{ schedule.fare if schedule.fare else '50.00' }}</span></span>
+                </div>
+                <div class="fare-total">
+                    <strong>Total Amount:</strong>
+                    <strong>$<span id="totalFare">{{ schedule.fare if schedule.fare else '50.00' }}</span></strong>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" id="confirm_details" name="confirm_details" required class="form-check-input">
+                    <label for="confirm_details" class="form-check-label">
+                        I confirm that all passenger details are correct
+                    </label>
+                </div>
+            </div>
+            
+            <div class="booking-actions">
+                <a href="{{ url_for('search_routes') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Search
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> 
+                    {% if online %}Confirm Booking{% else %}Save Booking Offline{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let baseFare = parseFloat(document.getElementById('baseFare').textContent);
+let seatCount = document.getElementById('seat_count');
+let displaySeats = document.getElementById('displaySeats');
+let totalFare = document.getElementById('totalFare');
+
+function changeSeats(change) {
+    let current = parseInt(seatCount.value);
+    let newValue = current + change;
+    
+    if (newValue >= 1 && newValue <= 10) {
+        seatCount.value = newValue;
+        displaySeats.textContent = newValue;
+        totalFare.textContent = (baseFare * newValue).toFixed(2);
+    }
+}
+
+// Initialize fare calculation
+totalFare.textContent = (baseFare * parseInt(seatCount.value)).toFixed(2);
+</script>
+{% endblock %}

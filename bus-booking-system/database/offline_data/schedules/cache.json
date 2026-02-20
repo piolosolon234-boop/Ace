@@ -1,0 +1,55 @@
+[
+  {
+    "schedule_id": 101,
+    "bus_number": "PHB-SAMPLE-001",
+    "departure_time": "08:00",
+    "arrival_time": "14:00",
+    "travel_date": "2026-02-20",
+    "total_seats": 45,
+    "available_seats": 25,
+    "fare": 850.0,
+    "bus_operator": "Victory Liner",
+    "bus_type": "Deluxe",
+    "amenities": "Aircon, TV, Reclining Seats",
+    "route_name": "Cebu to Bohol Express",
+    "origin_city": "Cebu",
+    "destination_city": "Bohol",
+    "distance_km": 250,
+    "estimated_hours": 6,
+    "estimated_duration_hours": 6,
+    "route_type": "Deluxe",
+    "via_route": "NLEX, SCTEX",
+    "amenities_list": [
+      "Aircon",
+      "TV",
+      "Reclining Seats"
+    ]
+  },
+  {
+    "schedule_id": 102,
+    "bus_number": "PHZM-SAMPLE-001",
+    "departure_time": "20:00",
+    "arrival_time": "02:00",
+    "travel_date": "2026-02-20",
+    "total_seats": 45,
+    "available_seats": 18,
+    "fare": 2200.0,
+    "bus_operator": "RORO Bus",
+    "bus_type": "Premium",
+    "amenities": "Aircon, Bunks, Toilet, Meal",
+    "route_name": "Zamboanga to Manila (RORO)",
+    "origin_city": "Zamboanga City",
+    "destination_city": "Manila",
+    "distance_km": 1100,
+    "estimated_hours": 30,
+    "estimated_duration_hours": 30,
+    "route_type": "Premium",
+    "via_route": "RORO via Cebu",
+    "amenities_list": [
+      "Aircon",
+      "Bunks",
+      "Toilet",
+      "Meal"
+    ]
+  }
+]

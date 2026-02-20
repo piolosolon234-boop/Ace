@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings - Philippine Bus Booking System{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="min-height: 60vh;">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-ticket-alt me-2"></i>
+                My Bookings
+            </h2>
+            <p class="text-muted">View and manage your bus tickets</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('search_routes') }}" class="btn btn-primary">
+                <i class="fas fa-search me-2"></i>Book New Trip
+            </a>
+        </div>
+    </div>
+    
+    {% if bookings %}
+        <div class="row">
+            {% for booking in bookings %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 {% if booking.is_offline %}border-warning{% endif %} shadow-sm">
+                        <div class="card-header {% if booking.booking_status == 'Confirmed' %}bg-success text-white{% elif booking.booking_status == 'Pending Sync' %}bg-warning{% else %}bg-secondary text-white{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong>
+                                    <i class="fas fa-bus me-2"></i>
+                                    {{ booking.booking_reference }}
+                                </strong>
+                                {% if booking.is_offline %}
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-wifi-slash me-1"></i>Offline
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Passenger</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ booking.passenger_name }}
+                                    </h6>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Booking Date</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ booking.booking_date[:10] if booking.booking_date else 'N/A' }}
+                                    </h6>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Bus Number</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-bus me-1"></i>
+                                        {{ booking.bus_number or 'N/A' }}
+                                    </h6>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Seats</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chair me-1"></i>
+                                        {{ booking.seat_numbers or 'N/A' }}
+                                    </h6>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Travel Date</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        {{ booking.travel_date[:10] if booking.travel_date else 'N/A' }}
+                                    </h6>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Departure Time</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ booking.departure_time or 'N/A' }}
+                                    </h6>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <small class="text-muted">Route</small>
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-route me-1"></i>
+                                        {{ booking.route_name or 'Unknown Route' }}
+                                    </h6>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row align-items-center">
+                                <div class="col-6">
+                                    <h5 class="text-success mb-0">
+                                        <i class="fas fa-tag me-1"></i>
+                                        ₱{{ "%.2f"|format(booking.total_fare|float) }}
+                                    </h5>
+                                </div>
+                                <div class="col-6 text-end">
+                                    {% if booking.booking_status == 'Confirmed' %}
+                                        <span class="badge bg-success p-2">
+                                            <i class="fas fa-check-circle me-1"></i>Confirmed
+                                        </span>
+                                    {% elif booking.booking_status == 'Pending Sync' %}
+                                        <span class="badge bg-warning p-2">
+                                            <i class="fas fa-sync me-1"></i>Pending Sync
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary p-2">
+                                            {{ booking.booking_status }}
+                                        </span>
+                                    {% endif %}
+                                    
+                                    <span class="badge {% if booking.payment_status == 'Paid' %}bg-success{% else %}bg-info{% endif %} p-2 ms-1">
+                                        <i class="fas fa-credit-card me-1"></i>{{ booking.payment_status }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                                    <i class="fas fa-print me-1"></i>Print Ticket
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#bookingModal{{ loop.index }}">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Booking Details Modal -->
+                <div class="modal fade" id="bookingModal{{ loop.index }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-ticket-alt me-2"></i>
+                                    Booking Details - {{ booking.booking_reference }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="border-bottom pb-2">Passenger Information</h6>
+                                        <p><strong>Name:</strong> {{ booking.passenger_name }}</p>
+                                        <p><strong>Age:</strong> {{ booking.passenger_age or 'N/A' }}</p>
+                                        <p><strong>Gender:</strong> {{ booking.passenger_gender or 'N/A' }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="border-bottom pb-2">Booking Information</h6>
+                                        <p><strong>Reference:</strong> {{ booking.booking_reference }}</p>
+                                        <p><strong>Date:</strong> {{ booking.booking_date[:10] if booking.booking_date else 'N/A' }}</p>
+                                        <p><strong>Status:</strong> {{ booking.booking_status }}</p>
+                                        <p><strong>Payment:</strong> {{ booking.payment_status }}</p>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="border-bottom pb-2">Trip Information</h6>
+                                        <p><strong>Bus:</strong> {{ booking.bus_number }} ({{ booking.bus_operator or 'N/A' }})</p>
+                                        <p><strong>Type:</strong> {{ booking.bus_type or 'N/A' }}</p>
+                                        <p><strong>Travel Date:</strong> {{ booking.travel_date[:10] if booking.travel_date else 'N/A' }}</p>
+                                        <p><strong>Departure:</strong> {{ booking.departure_time or 'N/A' }}</p>
+                                        <p><strong>Arrival:</strong> {{ booking.arrival_time or 'N/A' }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="border-bottom pb-2">Payment Details</h6>
+                                        <p><strong>Fare per seat:</strong> ₱{{ "%.2f"|format(booking.seat_fare|float) if booking.seat_fare else 'N/A' }}</p>
+                                        <p><strong>Number of seats:</strong> {{ booking.number_of_seats or '1' }}</p>
+                                        <p><strong>Total Fare:</strong> ₱{{ "%.2f"|format(booking.total_fare|float) }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Please present this booking reference at the terminal for boarding.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="window.print()">
+                                    <i class="fas fa-print me-2"></i>Print
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Bookings Found</h4>
+                    <p class="text-muted mb-4">You haven't booked any bus tickets yet.</p>
+                    <a href="{{ url_for('search_routes') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search me-2"></i>Search for Bus Trips
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.empty-state {
+    padding: 3rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.card {
+    transition: transform 0.2s;
+    border: none;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+}
+
+@media print {
+    .navbar, .footer, .btn, .modal-footer {
+        display: none !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animation = `fadeInUp 0.5s ease forwards ${index * 0.1}s`;
+    });
+});
+
+// Print function for modals
+function printModal(modalId) {
+    const modalContent = document.querySelector(modalId + ' .modal-body').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Booking Details</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+            </head>
+            <body>
+                <div class="container mt-4">
+                    ${modalContent}
+                </div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+</script>
+{% endblock %}

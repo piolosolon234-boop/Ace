@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Bus Booking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-cog"></i> Admin Panel</h1>
+        <p>System administration and monitoring</p>
+    </div>
+    
+    {% if not online %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i>
+        <strong>Admin panel requires online connection!</strong>
+        Please connect to MySQL database to access admin features.
+    </div>
+    {% else %}
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #4CAF50;">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_bookings|default(0) }}</h3>
+                    <p>Total Bookings</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #2196F3;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ stats.total_users|default(0) }}</h3>
+                    <p>Registered Users</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #FF9800;">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>{{ stats.today_bookings|default(0) }}</h3>
+                    <p>Today's Bookings</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #9C27B0;">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>₱ {{ "%.2f"|format(stats.revenue|default(0)) }}</h3>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sync Section -->
+        <div class="admin-section">
+            <h2><i class="fas fa-sync"></i> Data Synchronization</h2>
+            <div class="sync-card">
+                <div class="sync-info">
+                    <h3>Offline Data Pending Sync</h3>
+                    <p class="sync-count">{{ pending_sync }} items pending</p>
+                    <p class="sync-desc">
+                        These are registrations and bookings made while offline.
+                        Sync them to the database when ready.
+                    </p>
+                </div>
+                <div class="sync-actions">
+                    <button id="syncButton" class="btn btn-primary" 
+                            {% if pending_sync == 0 %}disabled{% endif %}>
+                        <i class="fas fa-sync"></i> Sync Now
+                    </button>
+                    <button id="refreshButton" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Bookings -->
+        <div class="admin-section">
+            <h2><i class="fas fa-history"></i> Recent Bookings</h2>
+            {% if stats.recent_bookings %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>User</th>
+                                <th>Passenger</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in stats.recent_bookings %}
+                            <tr>
+                                <td>{{ booking.booking_reference }}</td>
+                                <td>{{ booking.username }}</td>
+                                <td>{{ booking.passenger_name }}</td>
+                                <td>${{ "%.2f"|format(booking.total_fare) }}</td>
+                                <td>{{ booking.booking_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-history fa-2x"></i>
+                    <p>No recent bookings</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- System Info -->
+        <div class="admin-section">
+            <h2><i class="fas fa-info-circle"></i> System Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Database Status:</strong>
+                    <span class="status-online">Connected</span>
+                </div>
+                <div class="info-item">
+                    <strong>MySQL Server:</strong>
+                    <span>localhost:3306</span>
+                </div>
+                <div class="info-item">
+                    <strong>Database:</strong>
+                    <span>bus_booking_system</span>
+                </div>
+                <div class="info-item">
+                    <strong>Active Schedules:</strong>
+                    <span>{{ stats.active_schedules|default(0) }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Current Time:</strong>
+                    <span id="currentTime">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <strong>Server Uptime:</strong>
+                    <span id="serverUptime">--</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if online %}
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-info h3 {
+    font-size: 2rem;
+    margin: 0;
+    color: #333;
+}
+
+.stat-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.admin-section {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.admin-section h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sync-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2196F3;
+}
+
+.sync-count {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2196F3;
+    margin: 0.5rem 0;
+}
+
+.sync-desc {
+    color: #666;
+    margin: 0;
+    max-width: 500px;
+}
+
+.sync-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table tr:hover {
+    background: #f8f9fa;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.status-online {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+}
+
+.empty-state i {
+    margin-bottom: 1rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = 
+            now.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+    }
+    
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // Server uptime (simplified)
+    const startTime = Date.now();
+    function updateUptime() {
+        const uptime = Date.now() - startTime;
+        const hours = Math.floor(uptime / (1000 * 60 * 60));
+        const minutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((uptime % (1000 * 60)) / 1000);
+        document.getElementById('serverUptime').textContent = 
+            `${hours}h ${minutes}m ${seconds}s`;
+    }
+    
+    updateUptime();
+    setInterval(updateUptime, 1000);
+    
+    // Sync button functionality
+    const syncButton = document.getElementById('syncButton');
+    const refreshButton = document.getElementById('refreshButton');
+    
+    if (syncButton) {
+        syncButton.addEventListener('click', function() {
+            if (this.disabled) return;
+            
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+            
+            fetch('/sync-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Sync completed successfully!\n\n` +
+                          `Users synced: ${data.users_synced}\n` +
+                          `Bookings synced: ${data.bookings_synced}`);
+                    
+                    // Refresh the page
+                    location.reload();
+                } else {
+                    alert('Sync failed: ' + (data.message || 'Unknown error'));
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                alert('Sync error: ' + error.message);
+                this.disabled = false;
+                this.innerHTML = originalText;
+            });
+        });
+    }
+    
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            location.reload();
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

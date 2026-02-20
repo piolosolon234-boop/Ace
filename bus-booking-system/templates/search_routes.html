@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Bus Routes - Philippine Bus Booking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-brand .ph-flag {
+            color: #ce1126;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #2a5298;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background: #e8efff;
+            color: #1e3c72;
+        }
+        
+        .nav-link.active {
+            background: #1e3c72;
+            color: white;
+        }
+        
+        .connection-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .online {
+            background: #10b981;
+            color: white;
+        }
+        
+        .offline {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .search-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+            border: 2px solid #ffcc00;
+        }
+        
+        .search-title {
+            color: #1e3c72;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .search-title i {
+            color: #ce1126;
+        }
+        
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #1e3c72;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+        
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ce1126 0%, #1e3c72 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(206, 17, 38, 0.3);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .btn-block {
+            width: 100%;
+            grid-column: span 3;
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .btn-block {
+                grid-column: span 1;
+            }
+        }
+        
+        .results-container {
+            margin-top: 2rem;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .results-count {
+            background: #ffcc00;
+            color: #1e3c72;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        
+        .schedule-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .schedule-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .schedule-header h3 {
+            color: #1e3c72;
+            font-size: 1.25rem;
+        }
+        
+        .bus-number {
+            background: #f0f7ff;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #1e3c72;
+            border: 1px solid #1e3c72;
+        }
+        
+        .route-info {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        
+        .route-point {
+            text-align: center;
+        }
+        
+        .city {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+        
+        .time {
+            color: #64748b;
+            font-size: 0.95rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .route-arrow {
+            color: #ce1126;
+            font-size: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .duration {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            background: #ffcc00;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            color: #1e3c72;
+            font-weight: 600;
+        }
+        
+        .schedule-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .schedule-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #475569;
+        }
+        
+        .detail-item i {
+            color: #1e3c72;
+            width: 20px;
+        }
+        
+        .fare {
+            font-weight: 700;
+            color: #ce1126;
+            font-size: 1.1rem;
+        }
+        
+        .schedule-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-online {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .badge-offline {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+        
+        .badge-deluxe {
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            color: #1e3c72;
+            font-weight: 700;
+        }
+        
+        .badge-regular {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 204, 0, 0.2);
+            color: #92400e;
+            border: 1px solid #ffcc00;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            color: #64748b;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        
+        .no-results h3 {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        
+        .ph-cities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+        
+        .city-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .city-tag:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 2px solid #ffcc00;
+            text-align: center;
+            color: #1e3c72;
+        }
+        
+        .footer-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .bus-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="ph-flag">🇵🇭</span>
+                <span>Philippine Bus Booking</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="{{ url_for('search_routes') }}" class="nav-link active">
+                    <i class="fas fa-ticket-alt"></i> Book Tickets
+                </a>
+                
+                {% if session.user_id %}
+                    <a href="{{ url_for('my_bookings') }}" class="nav-link">
+                        <i class="fas fa-list"></i> My Bookings
+                    </a>
+                    {% if session.is_admin %}
+                    <a href="{{ url_for('admin_panel') }}" class="nav-link">
+                        <i class="fas fa-cog"></i> Admin
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i> {{ session.username }}
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <a href="{{ url_for('register') }}" class="nav-link">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+            <div class="connection-status {% if online %}online{% else %}offline{% endif %}">
+                <i class="fas fa-{% if online %}wifi{% else %}wifi-slash{% endif %}"></i>
+                {{ 'Online' if online else 'Offline' }}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="header">
+            <h1><i class="fas fa-bus"></i> Search Philippine Bus Routes</h1>
+            <p>Book buses across Luzon, Visayas, and Mindanao</p>
+            
+            <div class="ph-cities">
+                <span class="city-tag" onclick="setCities('Manila', 'Baguio')">Manila → Baguio</span>
+                <span class="city-tag" onclick="setCities('Cebu', 'Bohol')">Cebu → Bohol</span>
+                <span class="city-tag" onclick="setCities('Zamboanga', 'Manila')">Zamboanga → Manila</span>
+                <span class="city-tag" onclick="setCities('Davao', 'Cagayan de Oro')">Davao → CDO</span>
+                <span class="city-tag" onclick="setCities('Iloilo', 'Bacolod')">Iloilo → Bacolod</span>
+                <span class="city-tag" onclick="setCities('Pagadian', 'Manila')">Pagadian → Manila</span>
+            </div>
+        </div>
+        
+        <div class="search-card">
+            <h2 class="search-title">
+                <i class="fas fa-search-location"></i> Search Bus Routes
+            </h2>
+            
+            <form method="POST" class="search-form">
+                <div class="form-group">
+                    <label for="origin">
+                        <i class="fas fa-map-marker-alt"></i> From (Origin)
+                    </label>
+                    <input type="text" id="origin" name="origin" required 
+                           placeholder="Enter city (e.g., Zamboanga, Manila, Cebu)" 
+                           class="form-control"
+                           value="{{ search_data.origin if search_data else '' }}">
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                        Try: Manila, Cebu, Davao, Zamboanga, Baguio, Iloilo
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="destination">
+                        <i class="fas fa-map-marker-alt"></i> To (Destination)
+                    </label>
+                    <input type="text" id="destination" name="destination" required 
+                           placeholder="Enter city (e.g., Manila, Davao, Bohol)" 
+                           class="form-control"
+                           value="{{ search_data.destination if search_data else '' }}">
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                        Try: Manila, Baguio, Davao, Zamboanga, Bohol, Bacolod
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="travel_date">
+                        <i class="fas fa-calendar-alt"></i> Travel Date
+                    </label>
+                    <input type="date" id="travel_date" name="travel_date" required 
+                           class="form-control"
+                           value="{{ search_data.date if search_data else current_date }}"
+                           min="{{ current_date }}">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-search"></i> Search Available Buses
+                </button>
+            </form>
+        </div>
+        
+        {% if schedules is defined %}
+        <div class="results-container">
+            <div class="results-header">
+                <h2>Available Buses in Philippines</h2>
+                <span class="results-count">{{ schedules|length }} buses found</span>
+            </div>
+            
+            {% if not online %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Offline Mode:</strong> Showing sample data. Real-time availability when online.
+            </div>
+            {% endif %}
+            
+            {% if schedules %}
+                {% for schedule in schedules %}
+                <div class="schedule-card">
+                    <div class="schedule-header">
+                        <div>
+                            <h3>{{ schedule.route_name }}</h3>
+                            <span class="bus-type {% if schedule.bus_type == 'Deluxe' %}badge-deluxe{% else %}badge-regular{% endif %}">
+                                {{ schedule.bus_type }}
+                            </span>
+                        </div>
+                        <span class="bus-number">{{ schedule.bus_number }}</span>
+                    </div>
+                    
+                    <div class="route-info">
+                        <div class="route-point">
+                            <div class="city">{{ schedule.origin_city }}</div>
+                            <div class="time">{{ schedule.departure_time }}</div>
+                        </div>
+                        
+                        <div class="route-arrow">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            <div class="duration">{{ schedule.estimated_duration_hours }} hours</div>
+                        </div>
+                        
+                        <div class="route-point">
+                            <div class="city">{{ schedule.destination_city }}</div>
+                            <div class="time">{{ schedule.arrival_time }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-details">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>{{ schedule.travel_date }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-chair"></i>
+                            <span>{{ schedule.available_seats }} seats left</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-tag"></i>
+                            <span class="fare">₱{{ "%.2f"|format(schedule.fare) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-road"></i>
+                            <span>{{ schedule.estimated_duration_hours }}h travel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-actions">
+                        {% if session.user_id %}
+                            <a href="{{ url_for('book_ticket', schedule_id=schedule.schedule_id) }}" 
+                               class="btn btn-success">
+                                <i class="fas fa-ticket-alt"></i> Book This Bus
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Login to Book
+                            </a>
+                        {% endif %}
+                        
+                        <div class="badge {% if online %}badge-online{% else %}badge-offline{% endif %}">
+                            {% if online %}
+                                <i class="fas fa-bolt"></i> Live Availability
+                            {% else %}
+                                <i class="fas fa-database"></i> Sample Data
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <i class="fas fa-bus-slash"></i>
+                    <h3>No buses found for this route</h3>
+                    <p>Try searching for these popular Philippine routes:</p>
+                    <div class="ph-cities" style="margin-top: 1.5rem;">
+                        <span class="city-tag" onclick="setCities('Manila', 'Baguio')">Manila to Baguio</span>
+                        <span class="city-tag" onclick="setCities('Zamboanga', 'Manila')">Zamboanga to Manila</span>
+                        <span class="city-tag" onclick="setCities('Cebu', 'Bohol')">Cebu to Bohol</span>
+                        <span class="city-tag" onclick="setCities('Davao', 'Cagayan de Oro')">Davao to CDO</span>
+                        <span class="city-tag" onclick="setCities('Manila', 'Legazpi')">Manila to Bicol</span>
+                        <span class="city-tag" onclick="setCities('Pagadian', 'Manila')">Pagadian to Manila</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="footer">
+        <p>🇵🇭 Philippine Bus Booking System &copy; 2024 - School Project</p>
+        <div class="footer-info">
+            <i class="fas fa-database"></i>
+            Mode: {% if online %}Online (MySQL){% else %}Offline (Local Storage){% endif %}
+        </div>
+    </footer>
+
+    <script>
+        // Set default date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('travel_date');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = today;
+            }
+        });
+        
+        // Function to set cities when clicking on city tags
+        function setCities(origin, destination) {
+            document.getElementById('origin').value = origin;
+            document.getElementById('destination').value = destination;
+            
+            // Optional: Auto-submit the form
+            // document.querySelector('form').submit();
+        }
+        
+        // Add some common Philippine cities to search
+        const phCities = [
+            'Manila', 'Quezon City', 'Cebu City', 'Davao City', 'Zamboanga City',
+            'Baguio', 'Iloilo City', 'Bacolod', 'General Santos', 'Cagayan de Oro',
+            'Taguig', 'Pasig', 'Makati', 'Valenzuela', 'Las Piñas',
+            'Legazpi', 'Naga', 'Laoag', 'Vigan', 'San Fernando',
+            'Tagbilaran', 'Dumaguete', 'Tacloban', 'Ormoc', 'Roxas',
+            'Cotabato City', 'Marawi', 'Dipolog', 'Pagadian', 'Ozamiz'
+        ];
+    </script>
+</body>
+</html>

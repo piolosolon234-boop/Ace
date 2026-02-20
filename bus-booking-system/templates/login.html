@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Bus Booking{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">
+            <i class="fas fa-sign-in-alt"></i> Login to Your Account
+        </h2>
+        
+        {% if not online %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Offline Mode:</strong> You can only login with previously registered offline accounts.
+            New registrations will be saved locally.
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="Enter your username" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Enter your password" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </div>
+            
+            <div class="auth-links">
+                <p>Don't have an account? 
+                    <a href="{{ url_for('register') }}">Register here</a>
+                </p>
+                <p>Demo Admin: <code>admin / admin123</code></p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
